@@ -237,6 +237,17 @@ static int isotp_bind(struct socket *sock, struct sockaddr_unsized *uaddr, int l
 	if (isotp_register_rxid(so) && isotp_invalid_canid(rx_id))
 		return -EINVAL;
 
+	if (so->xl.tx_flags & CANXL_XLF) {
+		/* CAN XL padding only for CAN FD TX_DL lengths */
+		if ((so->opt.flags & CAN_ISOTP_TX_PADDING) &&
+		    so->tx.ll_dl != padlen(so->tx.ll_dl))
+			return -EINVAL;
+
+		/* CAN XL priority field is only 11 bit */
+		if ((tx_id | rx_id) & CAN_EFF_FLAG)
+			return -EINVAL;
+	}
+
 	if (!addr->can_ifindex)
 		return -ENODEV;
 

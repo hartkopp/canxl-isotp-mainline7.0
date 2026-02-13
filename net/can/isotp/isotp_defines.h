@@ -33,6 +33,9 @@
 /* valid bits that can/must be set in struct canxl_frame.flags */
 #define CANXL_FLAGS_MASK (CANXL_XLF | CANXL_RRS | CANXL_SEC)
 
+/* CAN CiA 611-1 Service Data Unit Type for ISO 15765-2 */
+#define CAN_CIA_ISO15765_2_SDT 0x09
+
 /* N_PCI type values in bits 7-4 of N_PCI bytes */
 #define N_PCI_SF 0x00	/* single frame */
 #define N_PCI_FF 0x10	/* first frame */
@@ -42,9 +45,11 @@
 
 #define N_PCI(pci) ((pci) & N_PCI_MASK)
 
+#define N_PCI_SF_XL 8	/* SF length CAN XL flag (bit 3 of N_PCI low nibble) */
+
 #define N_PCI_SZ 1	/* size of the PCI byte #1 */
 #define SF_PCI_SZ4 1	/* size of SingleFrame PCI including 4 bit SF_DL */
-#define SF_PCI_SZ8 2	/* size of SingleFrame PCI including 8 bit SF_DL */
+#define SF_PCI_SZ11 2	/* size of SingleFrame PCI including 6/11 bit SF_DL */
 #define FF_PCI_SZ12 2	/* size of FirstFrame PCI including 12 bit FF_DL */
 #define FF_PCI_SZ32 6	/* size of FirstFrame PCI including 32 bit FF_DL */
 #define FC_CONTENT_SZ 3	/* flow control content size in byte (FS/BS/STmin) */
@@ -102,6 +107,15 @@ struct isotp_sock {
 	struct list_head notifier;
 	wait_queue_head_t wait;
 	spinlock_t rx_lock; /* protect single thread state machine */
+};
+
+/* CAN CC/FD/XL frame union to properly access the data elements of different
+ * types of CAN frames all starting at skb->data
+ */
+union cfu {
+	struct can_frame cc;
+	struct canfd_frame fd;
+	struct canxl_frame xl;
 };
 
 #endif /* _ISOTP_DEFINES_H_ */
